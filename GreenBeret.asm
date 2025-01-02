@@ -20017,7 +20017,8 @@ UpdateBaddy:				; enters with A = TYP, IX = Current BaddyData
 	LD   D,$00
 	LD   A,(IX+FLAG)		; FLAG
 	OR   A
-	JP   M,label_BCCC
+	JP   M,BaddyFalling
+
 	LD   HL,BaddyRoutines
 	ADD  HL,DE
 	CALL JPIndex			; call the update routine for this baddy TYP
@@ -20130,6 +20131,7 @@ PlayerBelow:
 	JR   NC,BaddyNotOnLadder
 
 	LD   (IX+GNO),G_BADDYCLIMB	;$22			; GNO
+
 Baddy_MoveLeftWithScroll:
 	LD   A,R				; R flags when a scroll has happened
 	RET  P
@@ -20467,7 +20469,7 @@ UpdateSpriteX:
 	AND  $03
 	RET  Z					; not moving
 
-	LD   C,A
+	LD   C,A				; C = FLAG
 	LD   A,(IX+XSPD)		; XSPD
 	ADD  A,A
 	LD   E,A
@@ -20475,13 +20477,13 @@ UpdateSpriteX:
 	LD   HL,MovementSpeeds
 	ADD  HL,DE
 	DEC  C
-	JR   Z,label_BCA4
+	JR   Z,.MovingRight
 	
 	INC  HL
-label_BCA4:
+.MovingRight:
 	LD   A,(IX+XNO)			; XNO
 	ADD  A,(HL)				; add on speed
-	LD   C,A
+	LD   C,A				; C = XNO + XSPD
 
 	LD   A,R				; scrolled?
 	JP   P,NoScrollCompensate
@@ -20493,6 +20495,11 @@ NoScrollCompensate:
 	LD   (IX+XNO),C			; XNO
 	RET 
 
+; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+;
+;
+;
+
 NothingUnderneath:
 	LD   A,(IX+YNO)			; YNO
 	LD   (IX+BASEY),A		; BASEY
@@ -20503,9 +20510,10 @@ NothingUnderneath:
 
 	LD   A,S_FALL			; $02
 	CALL PlaySound
-	JR   label_BCEC
+	JR   DoFall
 
-label_BCCC:
+
+BaddyFalling:
 	LD   A,(IX+CNT2)		; CNT2
 	ADD  A,$04
 	LD   (IX+CNT2),A		; CNT2
@@ -20522,7 +20530,8 @@ label_BCCC:
 	LD   (IX+YNO),A			; YNO
 	EXX 
 	CALL GetMapXForBaddy
-label_BCEC:
+
+DoFall:
 	CALL UpdateSpriteX
 	LD   C,(IX+DIR)			
 	LD   A,(IX+YNO)			; YNO
@@ -20542,6 +20551,7 @@ label_BCEC:
 	LD   A,(IX+DIR)			
 	SUB  $20
 	LD   (IX+YNO),A			; YNO
+
 Landed:
 	RES  7,(IX+FLAG)		; FLAG - clear falling bit 7
 	LD   (IX+CNT2),$01		; CNT2
@@ -20999,13 +21009,13 @@ SpawnEOL1Baddy:
 ;
 
 EOL2_Boss:
-	LD   A,(EOL2BaddyCountdownTime)
+	LD   A,(EOL2BaddyCountdownTime)	; countdown to starting EOL baddy spawns
 	OR   A
-	JR   Z,label_BF82
+	JR   Z,.DoEOL2Baddies
 	DEC  (IY+$4B)			; FFCD - EOL2BaddyCountdownTime
 	RET 
 
-label_BF82:
+.DoEOL2Baddies:
 	DEC  (IY+$3D)			; NextBaddyCountdown
 	RET  NZ
 	
@@ -21021,16 +21031,17 @@ label_BF82:
 	POP  IX
 	LD   A,(FrameToggle)
 	OR   A
-	JR   NZ,label_BFA9
+	JR   NZ,.DogSpawnLeft
 	
 	LD   DE,$200B			; dog running right
 	LD   BC,$0108
-	JR   label_BFAF
+	JR   .DoDogSpawn
 
-label_BFA9:
-	LD   DE,$210C				; dog running left, GNO and TYP
+.DogSpawnLeft:
+	LD   DE,$210C			; dog running left, GNO and TYP
 	LD   BC,$02E4
-label_BFAF:
+
+.DoDogSpawn:
 	LD   (IX+TYP),E				; TYP
 	LD   (IX+FLAG),B			; FLAG
 	LD   (IX+XSPD),$01			; XSPD
@@ -21040,11 +21051,12 @@ label_BFAF:
 	LD   A,(EOL2SpawnCounter)
 	DEC  A
 	LD   (EOL2SpawnCounter),A
-	JR   Z,label_BFE0
+	JR   Z,.SpawnNextGroup
+
 	CP   $02
 	RET  NZ
 
-	PUSH BC			; every 2 dogs spawned we spawn a runner
+	PUSH BC								; every 2 dogs spawned we spawn a runner
 	CALL FindBaddySlot
 	POP  BC
 	RET  P
@@ -21053,22 +21065,24 @@ label_BFAF:
 	POP  IX
 	LD   L,C
 	LD   H,$90
-	LD   D,$01			; spawn running enemy
+	LD   D,$01							; spawn running enemy
 	JP   SpawnBaddy
 
-label_BFE0:
-	LD   (IY+$4D),$04			; FFCF - EOLSpawnCounter
+.SpawnNextGroup:
+	LD   (IY+$4D),$04					; FFCF - EOLSpawnCounter
 	LD   A,(EOL2BaddySpawnTime)
 	SUB  $04
 	LD   (EOL2BaddySpawnTime),A			; Reduce spawn time
-	LD   (EOL2BaddyCountdownTime),A			; set the new countdown time from the new spawn time
+	LD   (EOL2BaddyCountdownTime),A		; set the new countdown time from the new spawn time
+
 	LD   A,(FrameToggle)
 	CPL
 	LD   (FrameToggle),A
-	DEC  (IY+$49)			; FFCB - EOLBaddiesRemaining
+	DEC  (IY+$49)						; FFCB - EOLBaddiesRemaining
 	RET  NZ
-	LD   (IY+$4A),$19			; FFCC - EOLEndCountdown
-	RET 
+
+	LD   (IY+$4A),$19					; FFCC - EOLEndCountdown - we're done, start the countdown for EOL.
+ 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ;
@@ -21079,33 +21093,35 @@ EOL4_Boss:
 	LD   IX,BaddyData
 	LD   A,(IX+TYP)			; TYP
 	OR   A
-	RET  P
+	RET  P					; still alive
 
 	SET  7,(IY+$3A)			; FFBC - FlameThrowerActive
 	LD   HL,ELO4_FlameThrowerBoss
 	LD   (BaddyRoutines),HL
+
 	DEC  (IY+$49)			; FFCB - EOLBaddiesRemaining
-	JR   NZ,label_C01C
+	JR   NZ,.NotOver		; still baddies remaining to spawn
 	
-	LD   (IY+$4A),$18			; FFCC - EOLEndCountdown
+	LD   (IY+$4A),$18		; FFCC - EOLEndCountdown - start countdown to the level ending.
 	RET 
 
-label_C01C:
+.NotOver:
 	LD   A,(FrameToggle)
 	CPL
 	LD   (FrameToggle),A
 	OR   A
 	LD   D,$00
-	LD   B,$01
-	JR   NZ,label_C02E
+	LD   B,$01				; B = spawn left
+	JR   NZ,.SpawnRight
 
 	LD   L,$08
-	JR   label_C031
-label_C02E:
+	JR   .DoSpawn
+
+.SpawnRight:
 	INC  B
-	LD   L,$E4
-label_C031:
-	LD   H,$90
+	LD   L,$E4				; XNO to spawn at
+.DoSpawn:
+	LD   H,$90				; YNO to spawn at
 	JP   SpawnBaddy
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -21117,7 +21133,7 @@ ELO4_FlameThrowerBoss:
 	LD   A,(EOLBaddyCountdown)
 	OR   A
 	JP   NZ,UpdateBossFlameThrower
-	
+
 	CALL MoveSprite
 	DEC  (IY+$3D)			; FFBF - NextBaddyCountdown
 	RET  NZ
@@ -21129,65 +21145,70 @@ ELO4_FlameThrowerBoss:
 	LD   A,(IX+FLAG)		; FLAG
 	SRL  A
 	LD   A,(IX+XNO)			; XNO
-	JR   C,label_C05C
-	CP   C
-	RET  C
+	JR   C,.MovingRight
 
-	JR   label_C061
+	CP   C					
+	RET  C					; BaddyX < PlayerX
 
-label_C05C:
+	JR   .BaddyTryFlameThrower
+
+.MovingRight:
 	CP   C
-	RET  NC
+	RET  NC					;BaddyX > PlayerX
 
 	CP   $B0
-	RET  NC
+	RET  NC					; BaddyX > 176
 
-label_C061:
+.BaddyTryFlameThrower:
 	LD   HL,BossFlameThrowerOffset
 	LD   DE,gfx_FlameThrowerRight
 	LD   C,$00
-	LD   A,(IX+FLAG)			; FLAG
+	LD   A,(IX+FLAG)					; FLAG
 	AND  $03
 	DEC  A
 	LD   (FlameThrowerActive),A
-	JR   Z,label_C07A
+	JR   Z,.FlameThrowerRight
 
 	LD   DE,gfx_FlameThrowerLeft
 	LD   C,$08
 	INC  HL
-label_C07A:
+
+.FlameThrowerRight:
 	LD   (FlameThrowerSpriteData),DE
 	LD   (FlameThrowerSpriteData2),DE
-	LD   A,(IX+XNO)			; XNO
+	LD   A,(IX+XNO)						; XNO
 	AND  $F8
 	ADD  A,(HL)
 	INC  HL
-	JR   Z,label_C08F
+	JR   Z,.ClampFlameThrowerX
 
 	CP   $C0
-	JR   C,label_C090
+	JR   C,.NoClamp
 
-label_C08F:
+.ClampFlameThrowerX:
 	XOR  A
-label_C090:
+.NoClamp:
 	LD   (FlameThrowerX),A
 	ADD  A,C
 	LD   (FlameThrowerXNew),A
 	LD   A,(RND4)
 	AND  $01
 	LD   A,$94
-	JR   Z,BossFireFlameThrower
+	JR   Z,BossFireFlameThrower		; fire flame thrower standing up
+
 	LD   A,(IX+XNO)					; XNO
 	AND  $F8
 	BIT  0,(IX+FLAG)				; FLAG
-	JR   NZ,label_C0AD
+	JR   NZ,.IsMovingRight
+
 	ADD  A,$02
-label_C0AD:
+.IsMovingRight:
 	LD   (IX+XNO),A					; XNO
 	LD   (IX+YNO),$9C				; YNO
+
 	LD   A,(IX+GNO)
 	LD   (TempGNO),A
-	LD   (IX+GNO),G_BADDYLIERIGHT	; $23		; GNO
+	LD   (IX+GNO),G_BADDYLIERIGHT	; Lie the boss down whilst firing the flame throwe
 	LD   A,$A0
 
 BossFireFlameThrower:
