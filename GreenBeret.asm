@@ -15,7 +15,7 @@
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-CONFIGURE_INPUT			equ 1
+CONFIGURE_INPUT			equ 0
 START_LEVEL				equ 0
 NO_BADDY_COLLISIONS		equ 1
 
@@ -674,22 +674,25 @@ PlayerXYTarget:
 DoGameEnding:
 	LD   B,$64
 	CALL WaitBC_2
-	INC  (IY+$61)
+
+	INC  (IY+$61)		;FFE3 - Lives
 	LD   A,(RandMask)
 	SRL  A
 	OR   $01
 	LD   (RandMask),A
 	LD   A,(BaddyCountdownTime)
 	SUB  $08
-	JR   NC,label_5EF4
+	JR   NC,.NoReset
+
 	LD   A,$01
-label_5EF4:
+.NoReset:
 	LD   (BaddyCountdownTime),A
 	LD   A,(EOLBaddyCountdownTime)
 	SUB  $0A
-	JR   NC,label_5F00
+	JR   NC,.NoReset2
+
 	LD   A,$01
-label_5F00:
+.NoReset2:
 	LD   (EOLBaddyCountdownTime),A
 	CALL Sprint
 	db CLA
@@ -738,9 +741,11 @@ UpdatePlayerMovement:
 	LD   A,(IsStabbing)
 	OR   A
 	JR   NZ,UpdateStab
+	
 	LD   A,(PlayerLieDown)
 	OR   A
 	CALL NZ,UpdateLieDown
+
 	LD   A,(FUDLR)
 	LD   C,A
 	AND  $1F
@@ -758,25 +763,29 @@ UpdateStab:
 	DEC  A
 	LD   (IsStabbing),A			; countdown for stabbing time
 	RET  NZ
-	INC  DE			; stab counter done
+
+	INC  DE						; stab counter done
 	INC  DE
 	LD   A,(PlayerLieDown)
 	OR   A
-	LD   A,(DE)			; PlayerDir
+	LD   A,(DE)					; PlayerDir
 	JR   NZ,LyingStab
+	
 	CP   $02
 	RET  C
-	SUB  $0A			; 1010 - remove lyding down bits
+	
+	SUB  $0A					; 1010 - remove lying down bits
 	LD   (DE),A
-	RES  4,(IY+$28)			; FUDLR - clear fire bit from input
+	RES  4,(IY+$28)				; FUDLR - clear fire bit from input
 	JR   UpdatePlayerMovement
 
 LyingStab:
 	CP   $0A
 	RET  C
-	SUB  $04			; remove lying down bit
+
+	SUB  $04					; remove lying down bit
 	LD   (DE),A
-	RES  4,(IY+$28)			; FUDLR - remove fire bit from input
+	RES  4,(IY+$28)				; FUDLR - remove fire bit from input
 	JR   UpdatePlayerMovement
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -806,6 +815,7 @@ LieDown:
 	LD   A,(FUDLR)
 	AND  $03
 	RET  PE
+
 	ADD  A,$07
 	LD   (DE),A
 NoAction:
@@ -850,6 +860,7 @@ PlayerDownStab:
 DownNotOnLadder:
 	BIT  4,(IY+$25)			; LastFUDLR
 	JR   NZ,LieDown
+
 	LD   A,(DE)			; PlayerX
 	AND  $F8			; 8 pixel align
 	LD   (DE),A			; PlayerX
@@ -911,6 +922,7 @@ DownOnLadder:
 	LD   A,C
 	OR   A
 	RET  NZ
+
 	JP   LieDown
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -929,15 +941,11 @@ PlayerUp:
 	POP  DE
 	JR   NC,NotOnLadder
 
-; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-;
-;
-;
-
 PlayerUpOnLadder:
 	LD   A,(isSnappedToLadder)
 	OR   A
 	JR   NZ,isSnapped
+
 	LD   A,(DE)			; PlayerX
 	LD   (PlayerLadderX),A
 	LD   C,A
@@ -946,6 +954,7 @@ PlayerUpOnLadder:
 	CP   C
 	LD   A,C
 	JR   NC,SnapBack
+
 	ADD  A,$08			; move along 8 pixels to the next character position
 SnapBack:
 	AND  $F8
@@ -987,9 +996,11 @@ NotOnLadder:
 	LD   (TempFUDLR),A
 	AND  $03
 	JP   PO,HasDir
+
 	LD   A,(DE)			; PlayerDir
 	AND  $01
 	INC  A
+
 HasDir:
 	ADD  A,$03			; Add jump flag to PlayerDir
 	LD   (DE),A
@@ -1001,6 +1012,7 @@ UpdateJump:
 	LD   A,B
 	OR   A
 	JR   Z,JumpNoLadder
+
 	XOR  A
 	LD   B,A
 	PUSH DE
@@ -1027,10 +1039,12 @@ JumpNoLadder:
 	DEC  A
 	LD   (IsStabbing),A
 	JR   NZ,label_6123
+
 	INC  DE
 	LD   A,(DE)
 	CP   $09
 	JR   C,label_60FF
+
 	SUB  $06
 	LD   (DE),A
 label_60FF:
@@ -1059,6 +1073,7 @@ label_6123:
 	LD   A,(TempFUDLR)
 	AND  $03
 	JR   NZ,HasLR
+
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
