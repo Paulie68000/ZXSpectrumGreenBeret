@@ -21117,6 +21117,7 @@ ELO4_FlameThrowerBoss:
 	LD   A,(EOLBaddyCountdown)
 	OR   A
 	JP   NZ,UpdateBossFlameThrower
+	
 	CALL MoveSprite
 	DEC  (IY+$3D)			; FFBF - NextBaddyCountdown
 	RET  NZ
@@ -21193,7 +21194,7 @@ BossFireFlameThrower:
 	LD   (FlameThrowerY),A
 	LD   (FlameThrowerYNew),A
 	LD   (EOLBaddyCountdown),A
-	LD   (IY+$3B),$10			; FFBD - FlameThrowerInFlight
+	LD   (IY+$3B),$10				; FFBD - FlameThrowerInFlight
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -21299,33 +21300,42 @@ EOL3_Start:
 	LD   DE,$2010
 	CALL PixAddr
 	LD   C,$48
-label_C145:
+
+.NextLine:
 	LD   B,$1C
 	LD   A,L
-label_C148:
+
+.Fill:
 	LD   (HL),$00
 	INC  L
-	DJNZ label_C148
+	DJNZ .Fill
 	
 	LD   L,A
 	CALL BytDW
 	DEC  C
-	JR   NZ,label_C145
+	JR   NZ,.NextLine
 
 	JP   JP_TriggerEOL3Helicopters
-TriggerEOL1Truck:
-	LD   HL,$8010
-	LD   (TruckX),HL
-	LD   (TruckX2),HL
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ;
 ;
 ;
 
+TriggerEOL1Truck:
+	LD   HL,$8010
+	LD   (TruckX),HL
+	LD   (TruckX2),HL
+
 EOL1_Start:
 	LD   (IY+$49),$12			; FFCB - EOLBaddiesRemaining
 	RET 
+
+; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+;
+;
+;
+
 TriggerEOL2GuardsAndDogs:
 	XOR  A
 	LD   (FrameToggle),A
@@ -21399,10 +21409,12 @@ NextMine:
 	LD   A,(isGrenadeExploding)
 	OR   A
 	CALL NZ,CollideGrenadeExplosion
+
 	LD   A,(isShooting)
 	LD   HL,MineCollisionFuncs
 	CALL AddHLA
 	CALL JPIndex
+
 MineNotActive:
 	INC  IX
 	DJNZ NextMine
@@ -21417,6 +21429,7 @@ CollideMineToFlameThrower:
 	LD   A,(FlameThrowerY)
 	CP   $98
 	RET  C
+
 	EX   AF,AF'
 	LD   L,A
 	LD   H,$10
@@ -21434,15 +21447,18 @@ CollideMineToGrenade:
 	LD   A,(GrenadeY)
 	CP   $98
 	RET  C
+
 	EX   AF,AF'
 	LD   L,A
 	LD   H,$10
 	LD   A,(GrenadeX)
 	LD   E,A
 	LD   D,H
+
 DoWeaponCol:
 	CALL HitA
 	RET  C
+
 	LD   (IX+$00),$00			; Kill mine sprite
 	RET 
 
@@ -21455,21 +21471,23 @@ CollideGrenadeExplosion:
 	LD   A,(GrenadeExplodeY)
 	CP   $88
 	RET  C
-label_C1FB:
+
 	EX   AF,AF'
 	LD   L,A
 	LD   H,$10
 	LD   A,(GrenadeExplodeX)
 	SUB  $20
-	JR   NC,label_C207
+	JR   NC,.NoClamp1
+
 	XOR  A
-label_C207:
+.NoClamp1:
 	LD   E,A
 	CPL
 	CP   $50
-	JR   C,label_C20F
+	JR   C,.NoClamp2
+
 	LD   A,$50
-label_C20F:
+.NoClamp2:
 	LD   D,A
 	JR   DoWeaponCol
 
@@ -21544,14 +21562,15 @@ StageEndUpdateFunctions:
 ;
 
 CollideWithPlayer:			; colliding with stuff!
-	LD   B,$05			; 5 to test
+	LD   B,$05				; 5 to test
 	LD   IX,BaddyData
 	LD   A,(PlayerX)
 	CP   (IY+$36)			; FFB8 - ScrollBoundary
-	JR   C,label_C264
+	JR   C,.NotBoundary
+
 	LD   A,(ScrollBoundary)
 
-label_C264:
+.NotBoundary:
 	ADD  A,$0B
 	LD   L,A
 	LD   A,(PlayerY)
@@ -21560,6 +21579,7 @@ label_C264:
 	LD   A,(PlayerLieDown)
 	OR   A
 	JR   Z,NextBaddyLoop
+
 	LD   A,L
 	ADD  A,$08
 	LD   L,A
@@ -21616,9 +21636,11 @@ BullNotActive:
 	LD   DE,$0007
 	ADD  IX,DE
 	DJNZ NextBullCheck
+
 	LD   A,(MortarInFlight)
 	OR   A
 	JR   Z,NoMortarCheck
+	
 	LD   DE,(MortarBombX)
 	LD   C,$0E
 	LD   B,C
@@ -21628,12 +21650,13 @@ NoMortarCheck:
 	LD   A,(PlayerY)
 	CP   $8C
 	RET  C
+
 	LD   IX,MineXPositions
 	LD   B,$03			; 3 to test
-label_C2E6:
+.NextMine:
 	LD   A,(IX+$00)
 	OR   A
-	JR   Z,label_C2FF
+	JR   Z,.MineNotActive
 
 	ADD  A,$04
 	LD   E,A
@@ -21645,9 +21668,9 @@ label_C2E6:
 	CALL HitA
 	CALL NC,KillPlayer
 
-label_C2FF:
+.MineNotActive:
 	INC  IX
-	DJNZ label_C2E6
+	DJNZ .NextMine
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -21660,7 +21683,6 @@ TestHitPlayer:
 	PUSH DE
 	LD   D,C
 	LD   H,$01
-label_C309:
 	CALL HitA
 	POP  DE
 	POP  HL
@@ -21690,12 +21712,12 @@ KillPlayer:
 	LD   (PlayerX),A
 	LD   A,(PlayerLieDown)
 	OR   A
-	JR   Z,label_C33C
+	JR   Z,.NotLying
 	LD   A,(PlayerY)
 	SUB  $0C
 	LD   (PlayerY),A
 
-label_C33C:
+.NotLying:
 	XOR  A
 	LD   (HasWeapon),A
 	LD   (IsStabbing),A
@@ -21725,906 +21747,44 @@ JoyTable:
 	org $c350
 
 gfx_Balloons1:
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $01
-	db $E0
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $C0
-	db $F3
-	db $F3
-	db $00
-	db $00
-	db $00
-	db $03
-	db $FD
-	db $EF
-	db $F0
-	db $00
-	db $00
-	db $00
-	db $00
-	db $D8
-	db $FF
-	db $FF
-	db $06
-	db $00
-	db $00
-	db $3D
-	db $FD
-	db $EF
-	db $EF
-	db $00
-	db $00
-	db $00
-	db $80
-	db $DF
-	db $DF
-	db $FE
-	db $7E
-	db $00
-	db $00
-	db $7F
-	db $D5
-	db $2A
-	db $FF
-	db $80
-	db $00
-	db $00
-	db $C0
-	db $BF
-	db $C7
-	db $78
-	db $FF
-	db $00
-	db $00
-	db $FF
-	db $CC
-	db $0C
-	db $FF
-	db $C0
-	db $00
-	db $00
-	db $C0
-	db $7F
-	db $23
-	db $B1
-	db $FF
-	db $00
-	db $03
-	db $AB
-	db $0A
-	db $D4
-	db $35
-	db $70
-	db $00
-	db $00
-	db $F8
-	db $5E
-	db $11
-	db $A2
-	db $DE
-	db $07
-	db $07
-	db $F5
-	db $5C
-	db $0E
-	db $AB
-	db $F8
-	db $00
-	db $00
-	db $FC
-	db $97
-	db $00
-	db $40
-	db $FA
-	db $0F
-	db $0F
-	db $E0
-	db $40
-	db $00
-	db $81
-	db $FC
-	db $00
-	db $00
-	db $FC
-	db $73
-	db $00
-	db $80
-	db $F3
-	db $0F
-	db $0A
-	db $E4
-	db $00
-	db $00
-	db $09
-	db $D4
-	db $00
-	db $00
-	db $7C
-	db $91
-	db $00
-	db $40
-	db $A2
-	db $0F
-	db $05
-	db $42
-	db $40
-	db $00
-	db $90
-	db $A8
-	db $00
-	db $00
-	db $58
-	db $0A
-	db $00
-	db $00
-	db $94
-	db $06
-	db $03
-	db $0C
-	db $20
-	db $00
-	db $0C
-	db $30
-	db $00
-	db $00
-	db $C0
-	db $13
-	db $02
-	db $10
-	db $F2
-	db $00
-	db $00
-	db $01
-	db $00
-	db $02
-	db $20
-	db $00
-	db $00
-	db $00
-	db $00
-	db $22
-	db $00
-	db $10
-	db $10
-	db $00
-	db $00
-	db $08
-	db $88
-label_C409:
-	db $04
-	db $04
-	db $00
-	db $00
-	db $00
-	db $00
-	db $88
-	db $04
-	db $48
-	db $00
-	db $00
-	db $00
-	db $00
-	db $40
-	db $08
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $01
-	db $00
-	db $01
-	db $00
-	db $00
-	db $00
-	db $80
-	db $00
-	db $40
-	db $00
-	db $00
-	db $00
-	db $00
-	db $80
-	db $00
-	db $40
-	db $00
-	db $00
+	db $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$e0,$00,$00,$00,$00,$00,$c0,$f3,$f3,$00,$00,$00,$03,$fd,$ef
+	db $f0,$00,$00,$00,$00,$d8,$ff,$ff,$06,$00,$00,$3d,$fd,$ef,$ef,$00,$00,$00,$80,$df,$df,$fe,$7e,$00,$00,$7f,$d5,$2a,$ff,$80,$00,$00
+	db $c0,$bf,$c7,$78,$ff,$00,$00,$ff,$cc,$0c,$ff,$c0,$00,$00,$c0,$7f,$23,$b1,$ff,$00,$03,$ab,$0a,$d4,$35,$70,$00,$00,$f8,$5e,$11,$a2
+	db $de,$07,$07,$f5,$5c,$0e,$ab,$f8,$00,$00,$fc,$97,$00,$40,$fa,$0f,$0f,$e0,$40,$00,$81,$fc,$00,$00,$fc,$73,$00,$80,$f3,$0f,$0a,$e4
+	db $00,$00,$09,$d4,$00,$00,$7c,$91,$00,$40,$a2,$0f,$05,$42,$40,$00,$90,$a8,$00,$00,$58,$0a,$00,$00,$94,$06,$03,$0c,$20,$00,$0c,$30
+	db $00,$00,$c0,$13,$02,$10,$f2,$00,$00,$01,$00,$02,$20,$00,$00,$00,$00,$22,$00,$10,$10,$00,$00,$08,$88,$04,$04,$00,$00,$00,$00,$88
+	db $04,$48,$00,$00,$00,$00,$40,$08,$00,$00,$00,$00,$00,$00,$01,$00,$01,$00,$00,$00,$80,$00,$40,$00,$00,$00,$00,$80,$00,$40,$00,$00
+
 gfx_Balloons2:
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $78
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $F0
-	db $FC
-	db $3C
-	db $00
-	db $00
-	db $00
-	db $00
-	db $FF
-	db $7B
-	db $FC
-	db $00
-	db $00
-	db $00
-	db $00
-	db $F6
-	db $FF
-	db $BF
-	db $01
-	db $00
-	db $00
-	db $0F
-	db $7F
-	db $7B
-	db $FB
-	db $C0
-	db $00
-	db $00
-	db $E0
-	db $F7
-	db $B7
-	db $BF
-	db $1F
-	db $00
-	db $00
-	db $1F
-	db $F5
-	db $4A
-	db $BF
-	db $E0
-	db $00
-	db $00
-	db $F0
-	db $EF
-	db $31
-	db $DE
-	db $3F
-	db $00
-	db $00
-	db $3F
-	db $F3
-	db $03
-	db $3F
-	db $F0
-	db $00
-	db $00
-	db $F0
-	db $DF
-	db $48
-	db $EC
-	db $3F
-	db $00
-	db $00
-	db $EA
-	db $C2
-	db $B5
-	db $0D
-	db $5C
-	db $00
-	db $00
-	db $BE
-	db $57
-	db $84
-	db $A8
-	db $F7
-	db $01
-	db $01
-	db $FD
-	db $57
-	db $03
-	db $AA
-	db $FE
-	db $00
-	db $00
-	db $FF
-	db $25
-	db $00
-	db $90
-	db $FE
-	db $03
-	db $03
-	db $F8
-	db $10
-	db $00
-	db $20
-	db $7F
-	db $00
-	db $00
-	db $FF
-	db $1C
-	db $00
-	db $E0
-	db $FC
-	db $03
-	db $02
-	db $B9
-	db $00
-	db $00
-	db $02
-	db $75
-	db $00
-	db $00
-	db $5F
-	db $24
-	db $00
-	db $90
-	db $E8
-	db $03
-	db $01
-	db $50
-	db $90
-	db $00
-	db $24
-	db $2A
-	db $00
-	db $00
-	db $96
-	db $02
-	db $00
-	db $00
-	db $A5
-	db $01
-	db $00
-	db $C3
-	db $08
-	db $00
-	db $03
-	db $0C
-	db $00
-	db $00
-	db $F0
-	db $84
-	db $00
-	db $84
-	db $3C
-	db $00
-	db $00
-	db $00
-	db $40
-	db $00
-	db $88
-	db $00
-	db $00
-	db $00
-	db $80
-	db $08
-	db $00
-	db $04
-	db $04
-	db $00
-	db $00
-	db $02
-	db $22
-	db $01
-	db $01
-	db $00
-	db $00
-	db $00
-	db $00
-	db $22
-	db $01
-	db $12
-	db $00
-	db $00
-	db $00
-	db $00
-	db $10
-	db $02
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $40
-	db $00
-	db $40
-	db $00
-	db $00
-	db $00
-	db $00
-	db $20
-	db $00
-	db $10
-	db $00
-	db $00
-	db $00
-	db $00
-	db $20
-	db $00
-	db $10
-	db $00
-	db $00
+
+	db $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$78,$00,$00,$00,$00,$00,$f0,$fc,$3c,$00,$00,$00,$00,$ff,$7b
+	db $fc,$00,$00,$00,$00,$f6,$ff,$bf,$01,$00,$00,$0f,$7f,$7b,$fb,$c0,$00,$00,$e0,$f7,$b7,$bf,$1f,$00,$00,$1f,$f5,$4a,$bf,$e0,$00,$00
+	db $f0,$ef,$31,$de,$3f,$00,$00,$3f,$f3,$03,$3f,$f0,$00,$00,$f0,$df,$48,$ec,$3f,$00,$00,$ea,$c2,$b5,$0d,$5c,$00,$00,$be,$57,$84,$a8
+	db $f7,$01,$01,$fd,$57,$03,$aa,$fe,$00,$00,$ff,$25,$00,$90,$fe,$03,$03,$f8,$10,$00,$20,$7f,$00,$00,$ff,$1c,$00,$e0,$fc,$03,$02,$b9
+	db $00,$00,$02,$75,$00,$00,$5f,$24,$00,$90,$e8,$03,$01,$50,$90,$00,$24,$2a,$00,$00,$96,$02,$00,$00,$a5,$01,$00,$c3,$08,$00,$03,$0c
+	db $00,$00,$f0,$84,$00,$84,$3c,$00,$00,$00,$40,$00,$88,$00,$00,$00,$80,$08,$00,$04,$04,$00,$00,$02,$22,$01,$01,$00,$00,$00,$00,$22
+	db $01,$12,$00,$00,$00,$00,$10,$02,$00,$00,$00,$00,$00,$40,$00,$40,$00,$00,$00,$00,$20,$00,$10,$00,$00,$00,$00,$20,$00,$10,$00,$00
+
 gfx_Balloons3:
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $1E
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $3C
-	db $3F
-	db $0F
-	db $00
-	db $00
-	db $00
-	db $00
-	db $3F
-	db $DE
-	db $FF
-	db $00
-	db $00
-	db $00
-	db $80
-	db $FD
-	db $FF
-	db $6F
-	db $00
-	db $00
-	db $00
-	db $03
-	db $DF
-	db $DE
-	db $FE
-	db $F0
-	db $00
-	db $00
-	db $F8
-	db $FD
-	db $ED
-	db $EF
-	db $07
-	db $00
-	db $00
-	db $07
-	db $FD
-	db $52
-	db $AF
-	db $F8
-	db $00
-	db $00
-	db $FC
-	db $7B
-	db $8C
-	db $F7
-	db $0F
-	db $00
-	db $00
-	db $0F
-	db $FC
-	db $C0
-	db $CF
-	db $FC
-	db $00
-	db $00
-	db $FC
-	db $37
-	db $12
-	db $FB
-	db $0F
-	db $00
-	db $00
-	db $3A
-	db $B0
-	db $AD
-	db $43
-	db $57
-	db $00
-	db $80
-	db $EF
-	db $15
-	db $21
-	db $EA
-	db $7D
-	db $00
-	db $00
-	db $7F
-	db $55
-	db $C0
-	db $EA
-	db $BF
-	db $80
-	db $C0
-	db $7F
-	db $09
-	db $00
-	db $A4
-	db $FF
-	db $00
-	db $00
-	db $FE
-	db $04
-	db $00
-	db $08
-	db $1F
-	db $C0
-	db $C0
-	db $3F
-	db $07
-	db $00
-	db $38
-	db $FF
-	db $00
-	db $00
-	db $AE
-	db $40
-	db $00
-	db $00
-	db $9D
-	db $40
-	db $C0
-	db $17
-	db $09
-	db $00
-	db $24
-	db $FA
-	db $00
-	db $00
-	db $54
-	db $24
-	db $00
-	db $09
-	db $0A
-	db $80
-	db $80
-	db $A5
-	db $00
-	db $00
-	db $40
-	db $69
-	db $00
-	db $00
-	db $30
-	db $C2
-	db $00
-	db $00
-	db $C3
-	db $00
-	db $00
-	db $3C
-	db $21
-	db $00
-	db $21
-	db $0F
-	db $00
-	db $00
-	db $00
-	db $10
-	db $00
-	db $22
-	db $00
-	db $00
-	db $00
-	db $20
-	db $02
-	db $00
-	db $01
-	db $01
-	db $00
-	db $00
-	db $00
-	db $88
-	db $80
-	db $40
-	db $40
-	db $00
-	db $00
-	db $80
-	db $48
-	db $80
-	db $04
-	db $00
-	db $00
-	db $00
-	db $00
-	db $04
-	db $00
-	db $80
-	db $00
-	db $00
-	db $00
-	db $00
-	db $10
-	db $00
-	db $10
-	db $00
-	db $00
-	db $00
-	db $00
-	db $08
-	db $00
-	db $04
-	db $00
-	db $00
-	db $00
-	db $00
-	db $08
-	db $00
-	db $04
-	db $00
-	db $00
+
+	db $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$1e,$00,$00,$00,$00,$00,$3c,$3f,$0f,$00,$00,$00,$00,$3f,$de
+	db $ff,$00,$00,$00,$80,$fd,$ff,$6f,$00,$00,$00,$03,$df,$de,$fe,$f0,$00,$00,$f8,$fd,$ed,$ef,$07,$00,$00,$07,$fd,$52,$af,$f8,$00,$00
+	db $fc,$7b,$8c,$f7,$0f,$00,$00,$0f,$fc,$c0,$cf,$fc,$00,$00,$fc,$37,$12,$fb,$0f,$00,$00,$3a,$b0,$ad,$43,$57,$00,$80,$ef,$15,$21,$ea
+	db $7d,$00,$00,$7f,$55,$c0,$ea,$bf,$80,$c0,$7f,$09,$00,$a4,$ff,$00,$00,$fe,$04,$00,$08,$1f,$c0,$c0,$3f,$07,$00,$38,$ff,$00,$00,$ae
+	db $40,$00,$00,$9d,$40,$c0,$17,$09,$00,$24,$fa,$00,$00,$54,$24,$00,$09,$0a,$80,$80,$a5,$00,$00,$40,$69,$00,$00,$30,$c2,$00,$00,$c3
+	db $00,$00,$3c,$21,$00,$21,$0f,$00,$00,$00,$10,$00,$22,$00,$00,$00,$20,$02,$00,$01,$01,$00,$00,$00,$88,$80,$40,$40,$00,$00,$80,$48
+	db $80,$04,$00,$00,$00,$00,$04,$00,$80,$00,$00,$00,$00,$10,$00,$10,$00,$00,$00,$00,$08,$00,$04,$00,$00,$00,$00,$08,$00,$04,$00,$00
+
 gfx_Balloons4:
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $00
-	db $07
-	db $80
-	db $00
-	db $00
-	db $00
-	db $00
-	db $CF
-	db $CF
-	db $03
-	db $00
-	db $00
-	db $00
-	db $00
-	db $0F
-	db $F7
-	db $BF
-	db $C0
-	db $00
-	db $00
-	db $60
-	db $FF
-	db $FF
-	db $1B
-	db $00
-	db $00
-	db $00
-	db $00
-	db $F7
-	db $F7
-	db $BF
-	db $BC
-	db $00
-	db $00
-	db $7E
-	db $7F
-	db $FB
-	db $FB
-	db $01
-	db $00
-	db $00
-	db $01
-	db $FF
-	db $54
-	db $AB
-	db $FE
-	db $00
-	db $00
-	db $FF
-	db $1E
-	db $E3
-	db $FD
-	db $03
-	db $00
-	db $00
-	db $03
-	db $FF
-	db $30
-	db $33
-	db $FF
-	db $00
-	db $00
-	db $FF
-	db $8D
-	db $C4
-	db $FE
-	db $03
-	db $00
-	db $00
-	db $0E
-	db $AC
-	db $2B
-	db $50
-	db $D5
-	db $C0
-	db $E0
-	db $7B
-	db $45
-	db $88
-	db $7A
-	db $1F
-	db $00
-	db $00
-	db $1F
-	db $D5
-	db $70
-	db $3A
-	db $AF
-	db $E0
-	db $F0
-	db $5F
-	db $02
-	db $00
-	db $E9
-	db $3F
-	db $00
-	db $00
-	db $3F
-	db $81
-	db $00
-	db $02
-	db $07
-	db $F0
-	db $F0
-	db $CF
-	db $01
-	db $00
-	db $CE
-	db $3F
-	db $00
-	db $00
-	db $2B
-	db $90
-	db $00
-	db $00
-	db $27
-	db $50
-	db $F0
-	db $45
-	db $02
-	db $00
-	db $89
-	db $3E
-	db $00
-	db $00
-	db $15
-	db $09
-	db $00
-	db $02
-	db $42
-	db $A0
-	db $60
-	db $29
-	db $00
-	db $00
-	db $50
-	db $1A
-	db $00
-	db $00
-	db $0C
-	db $30
-	db $80
-	db $00
-	db $30
-	db $C0
-	db $00
-	db $4F
-	db $08
-	db $40
-	db $C8
-	db $03
-	db $00
-	db $00
-	db $00
-	db $04
-	db $00
-	db $08
-	db $80
-	db $00
-	db $00
-	db $88
-	db $00
-	db $40
-	db $40
-	db $00
-	db $00
-	db $00
-	db $00
-	db $22
-	db $20
-	db $10
-	db $10
-	db $00
-	db $00
-	db $20
-	db $12
-	db $20
-	db $01
-	db $00
-	db $00
-	db $00
-	db $00
-	db $01
-	db $00
-	db $20
-	db $00
-	db $00
-	db $00
-	db $00
-	db $04
-	db $00
-	db $04
-	db $00
-	db $00
-	db $00
-	db $00
-	db $02
-	db $00
-	db $01
-	db $00
-	db $00
-	db $00
-	db $00
-	db $02
-	db $00
-	db $01
-	db $00
-	db $00
+	db $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$07,$80,$00,$00,$00,$00,$cf,$cf,$03,$00,$00,$00,$00,$0f,$f7
+	db $bf,$c0,$00,$00,$60,$ff,$ff,$1b,$00,$00,$00,$00,$f7,$f7,$bf,$bc,$00,$00,$7e,$7f,$fb,$fb,$01,$00,$00,$01,$ff,$54,$ab,$fe,$00,$00
+	db $ff,$1e,$e3,$fd,$03,$00,$00,$03,$ff,$30,$33,$ff,$00,$00,$ff,$8d,$c4,$fe,$03,$00,$00,$0e,$ac,$2b,$50,$d5,$c0,$e0,$7b,$45,$88,$7a
+	db $1f,$00,$00,$1f,$d5,$70,$3a,$af,$e0,$f0,$5f,$02,$00,$e9,$3f,$00,$00,$3f,$81,$00,$02,$07,$f0,$f0,$cf,$01,$00,$ce,$3f,$00,$00,$2b
+	db $90,$00,$00,$27,$50,$f0,$45,$02,$00,$89,$3e,$00,$00,$15,$09,$00,$02,$42,$a0,$60,$29,$00,$00,$50,$1a,$00,$00,$0c,$30,$80,$00,$30
+	db $c0,$00,$4f,$08,$40,$c8,$03,$00,$00,$00,$04,$00,$08,$80,$00,$00,$88,$00,$40,$40,$00,$00,$00,$00,$22,$20,$10,$10,$00,$00,$20,$12
+	db $20,$01,$00,$00,$00,$00,$01,$00,$20,$00,$00,$00,$00,$04,$00,$04,$00,$00,$00,$00,$02,$00,$01,$00,$00,$00,$00,$02,$00,$01,$00,$00
+
+
 gfx_MissileTop1:
 	db $00
 	db $00
