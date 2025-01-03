@@ -54,10 +54,10 @@ T_BADDYKICK:					equ $07			; Jump kick enemy (left)
 T_BADDYCOMMANDANT:				equ $08			; Commandant (carries a shooter weapon)
 T_BADDYDIE:						equ $09			; Baddy Die
 T_BADDYSTOPPED:					equ $0a			; Stopped Enemy (after shooting)
-T_DOGRIGHT:						equ $0b			; Dog Right
+T_DOGRIGHTANDJUMP:				equ $0b			; Dog runs Right and then jumps at player
 T_DOGLEFT:						equ $0c			; Dog Left
 T_DOGJUMP:						equ $0d			; Jumping Dog
-T_BADDYDIE2:					equ $0e			;	
+T_BADDYDOGDIE:					equ $0e			; Dog die
 
 ; GNO indexes
 
@@ -15871,7 +15871,7 @@ DrawNextBaddy:
 	
 	PUSH BC
 	PUSH HL
-	CP   T_DOGRIGHT		; $0B TYP = DOGRIGHT
+	CP   T_DOGRIGHTANDJUMP		; $0B TYP = DOGRIGHT
 	LD   A,$0A			; sprite info +10 bytes into structure
 	JR   NC,DrawDogs	; > TYP 11 (DOGS)
 
@@ -19680,7 +19680,7 @@ BaddyLoop:
 	CP   T_BADDYDIE			; TYP 9 - BADDYDIE
 	JR   Z,PopNextBaddy
 
-	CP   T_BADDYDIE2		; TYP 14 - BADDYDIE
+	CP   T_BADDYDOGDIE		; TYP 14 - BADDYDOGDIE
 	JR   Z,PopNextBaddy
 	
 	LD   A,(IsStabbing)
@@ -19695,7 +19695,7 @@ BaddyLoop:
 	OR   A
 	JR   Z,PopNextBaddy
 	
-	LD   HL,label_B8B4+28			; $b8d0 (collisionFuncs) - 2 
+	LD   HL,CollisionFuncs-2	; label_B8B4+28	- $b8d0 (collisionFuncs) - 2 
 	CALL AddHLA
 	CALL JPIndex
 
@@ -19763,8 +19763,8 @@ CollideGrenade:
 	RET  C
 	
 	LD   A,(IX+TYP)			; TYP
-	CP   T_DOGRIGHT			; Dogs
-	JP   NC,label_B9C1
+	CP   T_DOGRIGHTANDJUMP			; Dogs
+	JP   NC,KillDog
 
 	JP   KillBaddy
 
@@ -19823,8 +19823,8 @@ CollideKnife:
 	LD   E,(IX+XNO)			; XNO
 	LD   D,$14
 	LD   A,(IX+TYP)			; TYP
-	CP   T_DOGRIGHT			; $0B
-	JP   NC,label_B99C
+	CP   T_DOGRIGHTANDJUMP	; $0B
+	JP   NC,StabDogs
 
 	CALL HitA
 	RET  C
@@ -19832,9 +19832,10 @@ CollideKnife:
 	LD   A,(PlayerLieDown)
 	OR   A
 	LD   A,(KnifeYNO)
-	JR   Z,label_B8FA
+	JR   Z,.NotLyingDown
+	
 	SUB  $10
-label_B8FA:
+.NotLyingDown:
 	LD   E,(IX+YNO)			; YNO
 	INC  A
 	LD   L,A
@@ -19903,33 +19904,35 @@ NoClamp:
 KillCommandant:
 	LD   DE,$0102
 	CALL AddScore
-	LD   E,(IY+$34)			; FFB6 - isShooting
+	LD   E,(IY+$34)				; FFB6 - isShooting
 	LD   A,(TriggeredWeapon)
 	LD   (HasWeapon),A			; pickup shooter weapon
 	DEC  A
-	LD   C,A
-	LD   B,G_BAZOOKA
+	LD   C,A					; C = WeaponType
+	LD   B,G_BAZOOKA			; B = Graphic Num
 	LD   A,$04
-	JR   NZ,label_B977
-	DEC  A
+	JR   NZ,.NotFlameThrower
+
+	DEC  A						; using a Flame Thrower
 	DEC  B
-label_B977:
+.NotFlameThrower:
 	INC  E
 	DEC  E
-	JR   Z,label_B97C
+	JR   Z,.SetWeapon
+
 	INC  A
-label_B97C:
+.SetWeapon:
 	LD   (WeaponCount),A
 	LD   A,B
 	LD   (WeaponGNO),A
-	LD   A,C			; weapon type
+	LD   A,C					; weapon type
 	ADD  A,A
 	LD   HL,WeaponStrings
 	CALL AddHLA
 	CALL HLFromHL
 	LD   (WeaponStringAddress),HL			; set character codes to draw shooter weapon
 	
-	CALL JP_Sprint			; Draw the picked up weapons
+	CALL JP_Sprint		; Draw the picked up weapons
 	db JSRS				; JSR STRG
 WeaponStringAddress:
 	dw $0000			; mod
@@ -19937,12 +19940,20 @@ WeaponStringAddress:
 	db FIN				; FIN
 	JR   DoKill			; now kill the commandant baddy
 
-label_B99C:
+; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+;
+;
+;
+
+
+StabDogs:				; Enters with A = TYP
 	LD   D,$18
-	CP   $0C
-	JR   Z,label_B9B8
+	CP   T_DOGLEFT		; $0C
+	JR   Z,isDogLeft
+
 	CALL HitA
 	RET  C
+
 	LD   A,(KnifeYNO)
 	INC  A
 	LD   L,A
@@ -19952,24 +19963,26 @@ label_B99C:
 	CALL HitA
 	RET  C
 
-	JR   label_B9C1
+	JR   KillDog
 
-label_B9B8:
+isDogLeft:					; Dogs running left don't jump so can only bit hit when the player is lying down
 	LD   A,(PlayerLieDown)
 	OR   A
 	RET  Z
-	CALL HitA
+
+	CALL HitA				; collide knife with dog when lying down
 	RET  C
 
-label_B9C1:
+KillDog:
 	LD   DE,$0203
 	CALL AddScore
 	LD   A,(IX+XNO)				; XNO
 	ADD  A,$02
 	LD   (IX+XNO),A				; XNO
+
 	LD   A,S_KICK				; $05
 	LD   (PlayingSound),A
-	LD   (IX+TYP),T_BADDYDIE2	; Baddy Die (2nd version)
+	LD   (IX+TYP),T_BADDYDOGDIE	; Baddy Dog Die 
 	LD   (IX+CNT2),$04			; CNT2
 	JP   PlaySound
 
@@ -20022,6 +20035,7 @@ UpdateBaddy:				; enters with A = TYP, IX = Current BaddyData
 	LD   HL,BaddyRoutines
 	ADD  HL,DE
 	CALL JPIndex			; call the update routine for this baddy TYP
+
 	LD   A,(IX+XNO)			; XNO
 	CP   $E5
 	JR   NC,BaddyOffScreen	;  x is between $05 and $E5
@@ -20045,11 +20059,11 @@ BaddyOffScreen:
 	CP   T_BADDYPARACHUTE
 	RET  Z					; return if PARACHUTEGUY
 	
-	LD   (IX+TYP),$80			; mark TYP as off screen
-	CP   T_BADDYRUNTURN			; running away enemy?
+	LD   (IX+TYP),$80		; mark TYP as off screen
+	CP   T_BADDYRUNTURN		; running away enemy?
 	RET  NZ
 
-	LD   (IX+TYP),$FF			; if TYP == 6 (T_BADDYRUNTURN) mark TYP as $FF
+	LD   (IX+TYP),$FF		; if TYP == 6 (T_BADDYRUNTURN) mark TYP as $FF
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -20082,6 +20096,7 @@ Baddy_RunAndGun:
 	OR   A
 	LD   A,(PlayerY)
 	JR   Z,PlayerUpright
+
 	SUB  $0C				; Player Y - 12
 PlayerUpright:
 	CP   C
@@ -20143,23 +20158,23 @@ Baddy_MoveLeftWithScroll:
 BaddyNotOnLadder:
 	LD   A,(IX+GNO)			; GNO
 	CP   G_BADDYCLIMB		; $22
-	JR   NZ,label_BAD8
+	JR   NZ,.NotClimbing
 
 	LD   C,$01
-	LD   A,(PlayerX)
+	LD   A,(PlayerX)		; see which side of the player the baddy is on
 	CP   (IX+XNO)			; XNO
-	JR   NC,label_BACF
-
+	JR   NC,.SetDirection
 	INC  C
-label_BACF:
+.SetDirection:
 	LD   (IX+FLAG),C		; FLAG
 	LD   A,G_GUNRUNNERRIGHT	; $16
-	ADD  A,C
+	ADD  A,C				; add on which way baddy should be facing
 	LD   (IX+GNO),A			; GNO
-label_BAD8:
+
+.NotClimbing:
 	LD   A,(IX+FLAG)		; FLAG
 	AND  $F3				; 1111 0011
-	LD   (IX+FLAG),A
+	LD   (IX+FLAG),A		; clear out the above/below bits - so we're on the same level as the player.
 
 	BIT  6,(IX+FLAG)		; flagged to leg it so we can reuse the slot
 	JP   NZ,SetRunningChangeDir
@@ -20262,7 +20277,7 @@ Baddy_Jumping:
 	LD   A,(IX+CNT2)			; CNT2
 	INC  A
 	AND  $07
-	JR   NZ,label_BB84
+	JR   NZ,StillJumping
 
 	BIT  6,(IX+FLAG)			; done a jump cycle, now check...
 	JP   NZ,SetRunningChangeDir
@@ -20273,7 +20288,8 @@ Baddy_Jumping:
 	LD   A,S_BADDYJUMP		; $04
 	CALL PlaySound
 	XOR  A
-label_BB84:
+
+StillJumping:
 	LD   (IX+CNT2),A		; CNT2
 	LD   HL,JumpArc
 	CALL AddHLA
@@ -20371,9 +20387,9 @@ SetMortarGuyDirection:
 	LD   C,G_MORTARGUYRIGHT	; $1A		; GNO $1a
 	LD   A,(PlayerX)
 	CP   (IX+XNO)			; XNO
-	JR   NC,label_BC21
-	INC  C
-label_BC21:
+	JR   NC,SetMortarGuyGFX
+	INC  C					; Make it G_MORTARGUYLEFT
+SetMortarGuyGFX:
 	LD   (IX+GNO),C			; GNO - face the player
 
 	LD   A,R				; scrolled?
@@ -20582,8 +20598,8 @@ BaddyRoutines:
 	dw Baddy_Commandant
 	dw Baddy_Die
 	dw Baddy_Stopped
-	dw Baddy_Dog
-	dw Baddy_JustRunLeft
+	dw Baddy_DogRunRightAndJump
+	dw Baddy_DogRunLeft
 	dw Baddy_JumpingDog
 	dw Baddy_Die
 
@@ -20592,25 +20608,25 @@ BaddyRoutines:
 ;
 ;
 
-Baddy_Dog:
+Baddy_DogRunRightAndJump:
 	LD   A,(IX+XNO)			; XNO
 	ADD  A,$04
 	LD   (IX+XNO),A			; XNO
 	CP   $E4
 	JP   NC,BaddyOffScreen
 
-	LD   C,A
+	LD   C,A				; Dog X
 	LD   A,(PlayerX)
 	CP   C
 	RET  C
 	
-	SUB  $40
-	JR   NC,label_BD5C
+	SUB  $40				; > 64 pixels away from player
+	JR   NC,.CheckDistance
 	
-	LD   A,$10
-label_BD5C:
-	CP   C
-	RET  NC
+	LD   A,$10				; 16 pixels away
+.CheckDistance:
+	CP   C					
+	RET  NC					; Dog > C pixels away
 	
 	LD   (IX+TYP),T_DOGJUMP		; TYP = JumpingDog
 	LD   (IX+CNT2),$3A			; CNT2 - index into sine table for jump
@@ -20621,7 +20637,7 @@ label_BD5C:
 ;
 ;
 
-Baddy_JustRunLeft:
+Baddy_DogRunLeft:
 	LD   A,(IX+XNO)			; XNO
 	SUB  $04
 	LD   (IX+XNO),A			; XNO
@@ -20654,7 +20670,7 @@ Baddy_JumpingDog:
 	RET  C
 	
 	LD   (IX+YNO),$98			; YNO snapped to $98
-	LD   (IX+TYP),T_DOGRIGHT	; TYP = dog right
+	LD   (IX+TYP),T_DOGRIGHTANDJUMP	; TYP = dog right
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -20767,7 +20783,7 @@ CheckActiveBaddies:
 BaddyActiveLoop:
 	LD   A,(HL)
 	OR   A
-	RET  P			; a baddy is active, we're done
+	RET  P								; a baddy is active, we're done
 
 	ADD  HL,DE
 	DJNZ BaddyActiveLoop
@@ -20776,7 +20792,7 @@ BaddyActiveLoop:
 	RET 
 
 NotLevelEnd:
-	DEC  (IY+$3D)			; $FFBF- NextBaddyCountdown
+	DEC  (IY+$3D)						; $FFBF- NextBaddyCountdown
 	RET  NZ
 
 	LD   A,(BaddyCountdownTime)
@@ -20972,18 +20988,21 @@ EOL1_Boss:
 	LD   A,(TruckActive)
 	OR   A
 	RET  Z
-	DEC  (IY+$3D)			; FFBF - NextBaddyCountdown
+
+	DEC  (IY+$3D)						; FFBF - NextBaddyCountdown
 	JR   NZ,NoSpawn
+	
 	LD   A,(BaddyCountdownTime)
 	LD   (NextBaddyCountdown),A
-	LD   A,$01				; A = $01 spawn running or running with gun baddy
+	LD   A,$01							; A = $01 spawn running or running with gun baddy
 	JR   SpawnEOL1Baddy
+
 NoSpawn:
-	DEC  (IY+$48)			; $FFCA - EOLBaddyCountdown
+	DEC  (IY+$48)						; $FFCA - EOLBaddyCountdown
 	RET  NZ
-	LD   A,(EOLBaddyCountdownTime)			; when 0, spawn a jumping baddy
+	LD   A,(EOLBaddyCountdownTime)		; when 0, spawn a jumping baddy
 	LD   (EOLBaddyCountdown),A
-	LD   A,$FF				; A = $FF = spawn jumping baddy
+	LD   A,$FF							; A = $FF = spawn jumping baddy
 
 SpawnEOL1Baddy:
 	EX   AF,AF'
@@ -21000,6 +21019,7 @@ SpawnEOL1Baddy:
 	LD   D,A				; d = type of baddy to spawn
 	DEC  (IY+$49)			; $FFCB - EOLBaddiesRemaining
 	JP   NZ,SpawnBaddy
+
 	LD   (IY+$4A),$19		; $FFCC - EOLEndCountdown
 	RET 
 

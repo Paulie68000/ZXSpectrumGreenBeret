@@ -44,4 +44,6 @@ The main map is decoded as two 4 character (32 pixels) high rows one on top of t
 
 Along with the actual map data there are several extra tables associated with each level that specify trigger points for mines, map height extension blocks, parachute baddies, mortar baddies and Weapon carrying Commandant baddies, Finally there are two more tables that specify the spans of walkable map and ladder positions.
 
+### Trivia
+No one seemed to notice in the reviews, but the high score never gets updated.  It is set to 33,000 at the start of the game and despite the code checking the score for when to give new lives it never actually updates the high score string.
 
