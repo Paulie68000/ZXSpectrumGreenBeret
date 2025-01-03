@@ -567,6 +567,7 @@ SFX_9:
 	db $15
 	db $1F
 	db $FF
+
 SFX_1:
 	db $FE
 	db $C8
@@ -577,6 +578,7 @@ SFX_1:
 	db $9A
 	db $64
 	db $FF
+
 SFX_8:
 	db $81
 	db $41
@@ -584,6 +586,7 @@ SFX_8:
 	db $09
 	db $05
 	db $FF
+
 SFX_7:
 	db $0B
 	db $65
@@ -598,6 +601,7 @@ SFX_7:
 	db $3D
 	db $97
 	db $FF
+
 SFX_3:
 	db $0B
 	db $15
@@ -612,6 +616,7 @@ SFX_3:
 	db $15
 	db $0B
 	db $FF
+
 SFX_2:
 	db $C8
 	db $01
@@ -626,6 +631,7 @@ SFX_2:
 	db $03
 	db $05
 	db $FF
+
 SFX_4:
 	db $C8
 	db $BE
@@ -634,12 +640,14 @@ SFX_4:
 	db $82
 	db $6E
 	db $FF
+
 SFX_5:
 	dw $111D
 	dw $0D19
 	dw $0B17
 	dw $0B15
 	db $FF
+
 SFX_6:
 	db $13
 	db $0F
@@ -8011,9 +8019,11 @@ BackBuffer:
 	LD   IY,Variables
 	XOR  A
 	OUT  ($FE),A
+	
 	IM   2
 	LD   A,high ISRTable		;$CC $CC00 holds ISR pointer to $FEFE
 	LD   I,A
+
 	LD   HL,ISRTable			;$CC00
 	LD   DE,ISRTable+1			;$CC01
 	LD   BC,$0100
@@ -8105,6 +8115,8 @@ Skip:
 	db FIN
 	JP   FrontEndDone
 
+; xxxx
+
 GetInputMode:
 	CALL ColourWindow
 	CALL JP_Sprint
@@ -8153,6 +8165,8 @@ SetInputKeys:
 	LD   BC,$000A
 	LDIR
 	RET 
+
+; xxxx
 
 DoRedefine:
 	CALL ColourWindow
@@ -8254,6 +8268,7 @@ WaitKey:
 	LD   DE,KeyTab+4
 	LD   BC,$0008
 	LDIR
+
 	LD   DE,KeyTab+2
 	LDI
 	LDI
@@ -8262,14 +8277,20 @@ WaitKey:
 	LDI
 	RET
 
+; xxxx
+
 ColourWindow:
 	LD   HL,$0A0F			; y,x
 	LD   BC,$131C			; height, width
 	LD   A,$40				; colour
 	JP   JP_FillAttrBlock
 
+; xxxx
+
 KeyPressed:
 	db $00
+
+; xxxx
 
 SelectUniqueKey:
 	HALT
@@ -8293,9 +8314,12 @@ UniqueLoop:
 NxtKey:
 	CP   (HL)
 	JR   Z,SelectUniqueKey
+
 	INC  HL
 	DJNZ NxtKey
 	RET 
+
+; xxxx
 
 ScanKeyboard:
 	LD   DE,$FE08			; D bitmask ($fe), E = 8 rows to read
@@ -8317,12 +8341,16 @@ ModBit:
 	BIT  0,A
 	RET  Z
 	DJNZ ReadRow
+
 	SLA  D
 	INC  D
 	DEC  E
 	JR   NZ,ReadQuad
+
 	INC  E
 	RET 
+
+; xxxx
 
 WaitAnyKeyDown:
 	XOR  A
@@ -8332,10 +8360,14 @@ WaitAnyKeyDown:
 	JR   NZ,WaitAnyKeyDown
 	RET 
 
+; xxxx
+
 WaitBFrames:
 	HALT
 	DJNZ WaitBFrames
 	RET 
+
+; xxxx
 
 AddHLA_1:
 	ADD  A,L
@@ -8353,6 +8385,8 @@ AddHLA_1:
 	LD   D,(HL)
 	INC  HL
 	RET 
+
+; xxxx
 
 RDPortAscii:			; 8 rows x 5 bytes of ASCII per row
 	db $5D
@@ -8456,6 +8490,8 @@ MenuKeyTable:			; 10 pairs of values for five keys
 	db $EF
 	db $FD
 
+; xxxx
+
 GetMenuKeys:
 	CALL WaitAnyKeyDown
 
@@ -8480,6 +8516,8 @@ GotKey:
 	LD   A,C
 	RET 
 
+; 8 characters that make up the box surrounds on the key input screen
+
 gfx_Menu:
 
 	db $00,$fe,$02,$fa,$fa,$1a,$da,$5a,$5a,$5a,$5a,$5a,$5a,$5a,$5a,$5a,$5a,$da,$1a,$fa,$fa,$02,$fe,$00,$00,$ff,$00,$ff,$ff,$00,$ff,$00
@@ -8499,7 +8537,7 @@ gfx_Menu:
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ;
-;
+; Page $88
 ;
 
 	org $8800
@@ -14741,7 +14779,7 @@ PlayerTempY:		; used to pass structure to background erase like a regular sprite
 	db $00
 	db $00
 
-WeaponX:
+WeaponX:				; Weapon vars combined act like the common sprite structure
 	db $6A
 
 WeaponY:
@@ -14895,13 +14933,13 @@ gfx_MaskAddresses:
 	dw gfx_MaskDogLeft
 	dw gfx_MaskBaddyLieRight
 
-PreShiftOffs_Weapons:			; pre shift offsets for weapons
+PreShiftOffs_Weapons:				; pre shift offsets for weapons
 	dw $0000
 	dw $0020
 	dw $0040
 	dw $0060
 
-PreShiftOffs_Dogs:			; pre shift offsets for dogs
+PreShiftOffs_Dogs:					; pre shift offsets for dogs
 	dw $0000
 	dw $0040
 	dw $0080
@@ -15044,7 +15082,7 @@ TruckX:
 TruckX2:
 	db $00
 	db $80
-data_A134_4:
+TruckMaskAddr:
 	dw $0000
 
 FlameThrowerX:
@@ -15159,7 +15197,7 @@ JP_CheckOnLadder:
 ;
 ;
 
-StabToStart:			; start point main game (post the one shot input method selection)
+StabToStart:				; start point main game (post the one shot input method selection)
 	DI  
 	LD   HL,ISR
 	LD   (ISRJumpAddr+1),HL
@@ -15184,8 +15222,8 @@ WaitStab:
 	CALL PlayGame			; play a complete game end to end
 
 	CALL JP_Sprint
-	db JSR					; $08
-	dw JP_FillAttrBlocks	; $5B09
+	db JSR					
+	dw JP_FillAttrBlocks	
 	db $0A, $07				; x, y
 	db $15, $09				; w, h
 	db $00					; attr
@@ -15212,6 +15250,7 @@ WaitStab:
 
 	LD   HL,$0018
 	LD   (Variables),HL
+
 	POP  HL
 	CALL PrintHighScore
 	JR   StabToStart
@@ -15248,6 +15287,7 @@ PlayGame:
 
 	LD   HL,gfx_MapTiles			; tile graphics
 	LD   (MapTileAddress),HL
+
 	CALL JP_DrawCaptives			; draw the firing squad wall
 
 	CALL JP_Sprint
@@ -15282,7 +15322,7 @@ StartLevel:
 
 	CALL MainLoop
 
-	INC  (IY+$5D)			; FFDF - LevelNumber
+	INC  (IY+$5D)				; FFDF - LevelNumber
 	LD   A,(isDead)
 	OR   A
 	JR   NZ,LoseLife
@@ -15294,20 +15334,20 @@ StartLevel:
 	LD   HL,(StageNumberText)
 	LD   A,H
 	INC  A
-	CP   $3A			; "9"+1
-	JR   NZ,label_A2A8
+	CP   $3A					; "9"+1
+	JR   NZ,.NoBump
 	
 	INC  L
-	LD   A,$30			; "0"
-label_A2A8:
+	LD   A,$30					; "0"
+.NoBump:
 	LD   H,A
 	LD   (StageNumberText),HL
 	JP   PlayGame
 
 LoseLife:
-	DEC  (IY+$5D)			; FFDF - LevelNumber
+	DEC  (IY+$5D)				; FFDF - LevelNumber
 	EI  
-	DEC  (IY+$61)			; FFE3 - Lives
+	DEC  (IY+$61)				; FFE3 - Lives
 	RET  Z
 
 	CALL DrawLives
@@ -15384,7 +15424,7 @@ LevelNames:
 ;
 ;
 
-FlashAndSound:
+FlashAndSiren:
 	LD   HL,$5887		; attr line of text
 	LD   B,$14			; 20 chars
 FlashLoop:
@@ -15396,13 +15436,14 @@ FlashLoop:
 
 	LD   HL,$592A
 	LD   B,$0C			; 12 chars
-label_A345:
+
+.Loop:
 	LD   A,(HL)
 	INC  A
 	AND  $47			; 0100 0111
 	LD   (HL),A
 	INC  L
-	DJNZ label_A345
+	DJNZ .Loop
 	
 	XOR  A
 	LD   R,A
@@ -15420,7 +15461,7 @@ AlarmLoop:
 	PUSH BC
 	LD   E,$FE			; initial pitch
 PitchUpLoop:
-	CALL FlashAndSound
+	CALL FlashAndSiren
 	LD   A,E
 	SUB  $0A			; pitch up
 	LD   E,A
@@ -15431,13 +15472,13 @@ PitchUpLoop:
 	LD   E,$64
 PitchHoldLoop:
 	PUSH BC			; hold the tone
-	CALL FlashAndSound
+	CALL FlashAndSiren
 	POP  BC
 	DJNZ PitchHoldLoop
 	
 	LD   E,$64
 PitchDownLoop:
-	CALL FlashAndSound
+	CALL FlashAndSiren
 	LD   A,E
 	ADD  A,$06			; pitch down
 	LD   E,A
@@ -15455,8 +15496,10 @@ PitchDownLoop:
 
 MainLoop:
 	CALL UpdateSFX
+	
 	LD   A,(V_HasScrolled)
 	LD   R,A
+
 	CALL DrawMissileTops
 	CALL Delay
 	CALL DumpBackBuffer
@@ -15472,15 +15515,19 @@ MainLoop:
 	CALL PrintScore
 	CALL UpdateWeaponSounds
 	CALL JP_DecodeMap
+
 	XOR  A
 	LD   (V_HasScrolled),A
 	LD   A,(FUDLR)
 	LD   (LastFUDLR),A
+	
 	CALL Keys
 	CALL PlayerCollideToWorld
 	CALL PlayerMovement
+	
 	LD   A,(V_HasScrolled)
 	LD   R,A
+	
 	CALL DoScroll
 	CALL Baddies
 	CALL CalcWeaponOffset
@@ -15578,8 +15625,10 @@ ResetGame:
 	LD   BC,$000B
 	LD   (HL),$30			; "0"
 	LDIR
+
 	LD   A,$33
 	LD   (HighScore+1),A
+
 	LD   HL,$3130			; "01"
 	LD   (StageNumberText),HL
 	
@@ -15605,8 +15654,10 @@ ResetVariables:
 	XOR  A
 	LD   (TruckX),A
 	LD   (TruckX2),A
+	
 	LD   HL,Baddy_RunAndGun			; Baddy routine 0
 	LD   (BaddyRoutines),HL
+
 	LD   HL,$00A6
 	LD   (LevelCountdown),HL
 	LD   L,A
@@ -15655,7 +15706,7 @@ ResetVariables:
 	db CLS
 	db MODE, RESETP
 	db JSR
-	dw JP_FillAttrBlocks		; $5B09
+	dw JP_FillAttrBlocks		
 	db $02, $00					; x, y
 	db $1D, $03					; w, h
 	db $47						; attr
@@ -15710,9 +15761,11 @@ HighScoreText:
 ResetLevel:
 	LD   HL,$9040
 	LD   (PlayerX),HL
+
 	LD   A,$19
 	LD   (EOLBaddyCountdown),A
 	LD   (NextBaddyCountdown),A
+
 	XOR  A
 	LD   (PlayerDir),A
 	LD   (PlayingSound),A
@@ -15797,10 +15850,10 @@ DrawNextLife:
 	CALL JP_Sprint
 	db PEN, $46
 	db TABX			
-	db $22					; hammer and sickle
+	db $22					; hammer and sickle top
 	db $23
 	db RTN
-	db $24					; hammer and sickle
+	db $24					; hammer and sickle bottom
 	db $25
 	db BACKSP, $00
 	db FIN			
@@ -15842,7 +15895,7 @@ DrawDogs:
 DrawSprites:
 	LD   HL,PlayerTempY				;erase the background above the scroll area
 	CALL EraseSpriteAboveMap24
-	LD   HL,BaddyData+13			;+13 = TEMPY
+	LD   HL,BaddyData+13			;+13 = offset to TEMPY
 	CALL EraseSpriteAboveMap24
 	LD   HL,BaddyData2+13
 	CALL EraseSpriteAboveMap24
@@ -15861,6 +15914,7 @@ DrawSprites:
 	CALL DrawSmallWeapon
 
 NoMortar:
+
 	LD   HL,BaddyData
 	LD   B,$05
 
@@ -15872,11 +15926,11 @@ DrawNextBaddy:
 	PUSH BC
 	PUSH HL
 	CP   T_DOGRIGHTANDJUMP		; $0B TYP = DOGRIGHT
-	LD   A,$0A			; sprite info +10 bytes into structure
-	JR   NC,DrawDogs	; > TYP 11 (DOGS)
+	LD   A,$0A					; sprite info +10 bytes into structure
+	JR   NC,DrawDogs			; > TYP 11 (DOGS)
 
 	ADD  A,L
-	LD   L,A			; HL points to sprite data structure
+	LD   L,A					; HL points to sprite data structure
 	CALL DrawSprite
 
 DoNext:
@@ -15896,7 +15950,7 @@ BaddyOff:
 	OR   A
 	JP   M,BaddyOff2
 
-	LD   A,$0A			; sprite info +10 bytes into structure
+	LD   A,$0A					; sprite info +10 bytes into structure
 	ADD  A,L
 	LD   L,A
 	CALL DrawSprite
@@ -15914,8 +15968,8 @@ DoNextBaddy:
 	PUSH HL
 	LD   A,$0D			; BaddyStructure + YTMP
 	ADD  A,L
-	LD   L,A			; Baddystructure + $0D
-	LD   (HL),$C8			; YTMP??
+	LD   L,A			
+	LD   (HL),$C8		; write to YTMP
 	POP  HL
 
 BaddyActive:
@@ -16011,16 +16065,16 @@ JoyIn:
 	IN   A,($FE)
 	OR   $E0
 	INC  A
-	JR   NZ,label_A6FC
+	JR   NZ,.GotInput
 	DJNZ JoyIn
 
 	LD   A,C
-	JR   label_A71D
+	JR   SetFUDLR
 
-label_A6FC:
+.GotInput:
 	LD   A,C
 	ADD  A,$20
-	JR   label_A71D
+	JR   SetFUDLR
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ;
@@ -16055,7 +16109,7 @@ KeyIn:
 	DJNZ KeyIn
 
 	LD   A,C
-label_A71D:
+SetFUDLR:
 	LD   (FUDLR),A
 	RET 
 
@@ -16071,23 +16125,24 @@ AddScoreToHL:
 	LD   D,$00
 	ADD  HL,DE
 	ADD  A,(HL)
-label_A729:
+NextDigit:
 	LD   B,A
 	SUB  $3A
-	JR   NC,label_A730
+	JR   NC,CarryForward
 
 	LD   (HL),B
 	RET 
 
-label_A730:
+CarryForward:
 	ADD  A,$30
 	LD   (HL),A
 	DEC  HL
 	LD   A,(HL)
 	OR   A
 	RET  Z
+
 	INC  A
-	JR   label_A729
+	JR   NextDigit
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ;
@@ -16252,6 +16307,7 @@ PreShiftOffsetMod:
 	JR   C,SpriteOR
 
 	EX   AF,AF'
+	
 DrawNextLine:
 	EX   AF,AF'			; 'AF = sprite height
 	POP  DE				; 2 bytes of sprite
@@ -16527,6 +16583,7 @@ DrawSmallWeapon:
 	LD   (SP_Store),SP
 	LD   SP,HL
 	EX   DE,HL
+
 	LD   B,$04			; four pixels high
 
 NextSprLine:
@@ -16571,6 +16628,7 @@ NextSprLine:
 	LD   H,A
 SkipLine:
 	DJNZ NextSprLine
+
 	LD   SP,(SP_Store)
 	RET 
 
@@ -16588,7 +16646,7 @@ ClearWeaponBackground:
 	CP   $08
 	JR   C,NoClampRequired
 
-	LD   A,$08			; clamp to 8 lines
+	LD   A,$08				; clamp to 8 lines
 
 NoClampRequired:
 	SRL  A
@@ -16781,7 +16839,7 @@ DumpBackBuffer:
 	LD   SP,LineAddresses		;$FF02
 	LD   BC,$0700
 
-label_A9C7:
+DumpLoop:
 	POP  DE
 	INC  L
 	INC  HL
@@ -16815,7 +16873,7 @@ label_A9C7:
 	LDI
 	LDI
 	LDI
-	JP   PE,label_A9C7
+	JP   PE,DumpLoop
 
 	LD   SP,(SP_Store)
 	RET 
@@ -16997,6 +17055,7 @@ PlayNoise:
 	XOR  A
 	OUT  ($FE),A
 	LD   B,(IY+$09)			; RND4
+
 WaitSound1:
 	LD   A,R
 	RET  M
@@ -17049,6 +17108,7 @@ CharScrollBuffer:
 	LD   BC,$00D8
 	LD   (SP_Store),SP
 	LD   SP,HL
+
 Scroll:
 	POP  DE
 	LD   L,E
@@ -17229,6 +17289,7 @@ SpriteGFXDataMOD:
 
 SpriteHeightMod:
 	LD   A,$10
+
 SpriteORLoop:
 	EX   AF,AF'
 	POP  BC
@@ -17352,11 +17413,13 @@ SpriteORLoop:
 	EX   AF,AF'
 	DEC  A
 	JR   NZ,SpriteORLoop
+
 	LD   SP,(SP_Store)
 	RET 
 
 SpriteHeightMod2:
 	LD   A,$10
+
 SpriteORLoop2:
 	EX   AF,AF'
 	POP  BC
@@ -17406,6 +17469,7 @@ SpriteORLoop2:
 	LD   (HL),A
 	INC  H
 	INC  DE
+
 Spr_MOD1:
 	NOP 
 	NOP 
@@ -17457,9 +17521,11 @@ Spr_MOD1:
 	LD   (HL),A
 	INC  H
 	INC  DE
+
 Spr_MOD2:
 	NOP 
 	NOP 
+
 	LD   A,H
 	AND  $07
 	JR   NZ,.Skip
@@ -17507,10 +17573,12 @@ ClrBlade:
 	LD   (HL),A
 	INC  L
 	DJNZ ClrBlade
+
 	POP  DE
 	LD   A,(FrameToggle)
 	OR   A
 	RET  Z
+
 	LD   B,A
 	LD   A,E
 	AND  $07
@@ -17548,6 +17616,7 @@ DelLp:
 	LD   A,B
 	OR   C
 	JR   NZ,DelLp
+
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -17558,11 +17627,14 @@ DelLp:
 DrawMissileTops:
 	LD   A,R
 	JP   M,DrawTops
+
 	LD   BC,$0A2D			; delay if no missile tops to draw
 WaitBC:
 	DEC  C
 	JR   NZ,WaitBC
+
 	DJNZ WaitBC
+
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -17589,6 +17661,7 @@ DoScroll:
 TriggerMissileTops:
 	LD   A,R
 	RET  P
+
 	LD   DE,(MapX)
 	LD   B,$04			;  four map triggers
 	LD   HL,MissileTopPositions
@@ -17606,32 +17679,37 @@ NextTop:
 	POP  HL
 	POP  BC
 	JR   Z,TriggerMissileTop
+
 	DJNZ NextTop
 	RET 
+
+TriggerMissileTop:
+
+	LD   HL, MissileTopsX - 1
+	LD   DE,MissileTopIndex
+	JP   SetPosition
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ;
 ;
 ;
 
-TriggerMissileTop:
-	LD   HL, MissileTopsX - 1
-	LD   DE,MissileTopIndex
-	JP   SetPosition
-
 DrawTops:
 	CALL BitScrollBuffer
 	LD   A,(LevelNumber)
 	AND  $03
 	RET  NZ
+
 	LD   HL,MissileTopsX
 	LD   A,(HL)
 	OR   A
 	CALL NZ,DrawBlock
+
 	INC  L
 	LD   A,(HL)
 	OR   A
 	CALL NZ,DrawBlock
+
 	INC  L
 	LD   A,(HL)
 	OR   A
@@ -17659,6 +17737,7 @@ DrawBlock:
 	SRL  E
 	SRL  E
 	ADD  HL,DE
+
 	LD   C,$02
 NextCharacter:
 	LD   B,$04
@@ -17679,6 +17758,7 @@ NextTwoRows:							; zig-zag two rows of 3 pixels at a time
 	LD   (HL),D
 	INC  H
 	DJNZ NextTwoRows
+
 	LD   A,H
 	AND  $07
 	JR   NZ,.Skip
@@ -17694,6 +17774,7 @@ NextTwoRows:							; zig-zag two rows of 3 pixels at a time
 .Skip:
 	DEC  C
 	JR   NZ,NextCharacter
+
 	EXX 
 	LD   SP,(SP_Store)
 	RET 
@@ -17706,6 +17787,7 @@ NextTwoRows:							; zig-zag two rows of 3 pixels at a time
 TriggerMines:
 	LD   A,R
 	RET  P
+	
 	LD   HL,(MineTriggerAddr)
 	LD   C,(HL)
 	INC  HL
@@ -17716,6 +17798,7 @@ TriggerMines:
 	SBC  HL,BC
 	POP  HL
 	RET  NZ
+	
 	LD   (MineTriggerAddr),HL
 	LD   HL,MineXPositions-1			; data_A0D0
 	LD   DE,MineIndex
@@ -17724,11 +17807,12 @@ SetPosition:
 	INC  A
 	AND  $03
 	JR   NZ,NoReset
+	
 	INC  A
 NoReset:
 	LD   (DE),A
 	CALL AddHLA
-	LD   (HL),$F0			; X at 240
+	LD   (HL),$F0						; X at 240
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -17736,15 +17820,17 @@ NoReset:
 ;
 ;
 
-DrawMines:			; draw up to three mines
+DrawMines:						; draw up to three mines
 	LD   HL,MineXPositions
 	LD   A,(HL)
 	OR   A
 	CALL NZ,DrawMine
+
 	INC  L
 	LD   A,(HL)
 	OR   A
 	CALL NZ,DrawMine
+	
 	INC  L
 	LD   A,(HL)
 	OR   A
@@ -17779,7 +17865,7 @@ NoScrollSkip:
 ToggleFrame:
 	LD   (SP_Store),SP
 	LD   SP,HL
-	LD   HL,$5280
+	LD   HL,$5280				; draw to screen
 	LD   E,C
 	SRL  E
 	SRL  E
@@ -17835,13 +17921,14 @@ NextMineLine:
 	EX   AF,AF'
 	DEC  A
 	JR   NZ,NextMineLine
+
 	LD   SP,(SP_Store)
 	EXX 
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ;
-;
+; The Truck full of soldiers drives in...
 ;
 
 Stage1EndUpdate:
@@ -17849,12 +17936,13 @@ Stage1EndUpdate:
 	OR   A
 	LD   A,S_KICK				; $05
 	CALL Z,PlaySound
+
 	LD   A,(TruckActive)
 	OR   A
 	RET  NZ
 
 	LD   HL,gfx_TruckMask
-	LD   (data_A134_4),HL
+	LD   (TruckMaskAddr),HL
 	LD   HL,TruckSpriteData
 	LD   (SpriteGFXDataMOD+1),HL
 	LD   A,$14
@@ -17866,26 +17954,30 @@ Stage1EndUpdate:
 	LD   (SpriteGFXDataMOD+1),HL
 	LD   A,$10
 	LD   (SpriteHeightMod+1),A
+
 	LD   A,(TruckX)
 	LD   C,A
 	ADD  A,$08
 	CP   $E0
-	JP   Z,label_AF12
+	JP   Z,TruckAtDestination
+
 	LD   (TruckX),A
 	LD   (TruckX2),A
-label_AEE5:
-	LD   A,C
+
+DoTruckAttrs:
+	LD   A,C			; TruckX
 	SRL  A
 	SRL  A
 	SRL  A
-	LD   L,A
+	LD   L,A			; / 8 
 	CP   $02
-	JR   NC,label_AEF3
+	JR   NC,.NoMinClamp
 	LD   L,$02
-label_AEF3:
+.NoMinClamp:
 	LD   H,$10
 	CP   $1A
-	JR   NC,label_AF05
+	JR   NC,.NoMaxClamp
+
 	ADD  A,$04
 	LD   C,A
 	LD   B,$12
@@ -17893,22 +17985,26 @@ label_AEF3:
 	PUSH HL
 	CALL JP_FillAttrBlock
 	POP  HL
-label_AF05:
+
+.NoMaxClamp:
 	LD   A,L
 	CP   $03
 	RET  C
+
 	DEC  L
 	LD   C,L
 	LD   B,$12
 	LD   A,$68
 	JP   JP_FillAttrBlock
-label_AF12:
+
+TruckAtDestination:
 	LD   E,$D8
 	LD   D,$80
 	CALL PixAddr
 	LD   B,$28
-	LD   DE,$831B
-label_AF1E:
+	LD   DE,$831B				; grab directly from BackBuffer
+
+.DrawLoop:
 	PUSH BC
 	PUSH HL
 	LDI
@@ -17920,10 +18016,10 @@ label_AF1E:
 	POP  HL
 	CALL BytDW
 	POP  BC
-	DJNZ label_AF1E
+	DJNZ .DrawLoop
 
 	LD   (IY+$47),$FF			; FFC9 - TruckActive
-	JR   label_AEE5
+	JR   DoTruckAttrs
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ;
@@ -17963,12 +18059,19 @@ NextBul:
 	DJNZ NextBul
 	RET 
 
+; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+;
+;
+;
+
 UpdateBullet:
 	LD   A,(HL)
 	OR   A
 	RET  M
+
 	INC  HL
 	PUSH HL
+
 	LD   HL,BulletVelocities			; velocities for different bullet types
 	LD   E,A
 	ADD  A,A
@@ -17980,17 +18083,20 @@ UpdateBullet:
 	INC  HL
 	LD   A,R
 	JP   P,NotScroll
+
 	LD   C,(HL)			; xvel2
 NotScroll:
 	INC  HL
 	LD   B,(HL)			; yvel
-	POP  HL
+
+	POP  HL				; retrieve bullet structure
 	LD   A,(HL)			; xno
 	ADD  A,C			; +xvel
 	LD   (HL),A			; xno
 	INC  HL
 	CP   $F8			; off screen?
 	JR   NC,KillBullet
+
 	LD   A,(HL)			; yno
 	ADD  A,B			; +yvel
 	LD   (HL),A			; yno
@@ -18008,7 +18114,7 @@ KillBullet:
 ;
 ;
 
-DrawBullets:			; draws up to four bullets
+DrawBullets:				; draws up to four bullets
 	LD   HL,BaddyBullets
 	LD   A,(HL)
 	OR   A
@@ -18119,6 +18225,7 @@ DrawBullet:
 	LD   A,H
 	SUB  $08
 	LD   H,A
+
 BullSkipLine:
 	POP  DE
 	LD   A,E
@@ -18154,10 +18261,12 @@ BullSkipLine:
 	LD   A,H
 	AND  $07
 	JR   NZ,BullSkipLine2
+	
 	LD   A,L
 	ADD  A,$20
 	LD   L,A
 	JR   C,BullSkipLine2
+	
 	LD   A,H
 	SUB  $08
 	LD   H,A
@@ -20164,6 +20273,7 @@ BaddyNotOnLadder:
 	LD   A,(PlayerX)		; see which side of the player the baddy is on
 	CP   (IX+XNO)			; XNO
 	JR   NC,.SetDirection
+
 	INC  C
 .SetDirection:
 	LD   (IX+FLAG),C		; FLAG
@@ -20669,8 +20779,8 @@ Baddy_JumpingDog:
 	CP   $98
 	RET  C
 	
-	LD   (IX+YNO),$98			; YNO snapped to $98
-	LD   (IX+TYP),T_DOGRIGHTANDJUMP	; TYP = dog right
+	LD   (IX+YNO),$98				; YNO snapped to $98
+	LD   (IX+TYP),T_DOGRIGHTANDJUMP	; TYP = dog running right that jumps!
 	RET 
 
 ; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -20698,6 +20808,7 @@ ResetLp:
 InitBaddyBullets:
 	LD   B,$04
 	LD   HL,BaddyBullets+2	; YNO
+
 NextBulletInit:
 	PUSH BC
 	PUSH HL
@@ -21247,6 +21358,7 @@ Stage4EndUpdate:
 	LD   A,(FlameThrowerActive)
 	OR   A
 	RET  M
+	
 	LD   A,(PlayerX)
 	ADD  A,$0B
 	LD   L,A
@@ -21745,6 +21857,7 @@ KillPlayer:
 	LD   A,(DeathCounter)
 	OR   A
 	RET  NZ
+
 	LD   (IY+$50),$28			; IY+DeathCounter
 	LD   A,$1D
 	LD   (PlayerDir),A
@@ -21754,6 +21867,7 @@ KillPlayer:
 	LD   A,(PlayerLieDown)
 	OR   A
 	JR   Z,.NotLying
+	
 	LD   A,(PlayerY)
 	SUB  $0C
 	LD   (PlayerY),A
